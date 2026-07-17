@@ -1,0 +1,21 @@
+{
+  "name": "clowder-wiki",
+  "version": "1.0.0",
+  "description": "Clowder AI 知识库 Wiki 服务器",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "wiki",
+    "clowder",
+    "ai",
+    "markdown"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

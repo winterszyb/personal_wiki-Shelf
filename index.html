@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人知识库</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" id="hljs-theme">
+    <style>
+        /* CSS 变量定义 */
+        :root {
+            --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-sidebar: rgba(0, 0, 0, 0.9);
+            --text-sidebar: white;
+            --border-sidebar: #333;
+            --bg-content: rgba(255, 255, 255, 0.95);
+            --text-content: #1a1a2e;
+            --text-content-secondary: #2d3436;
+            --bg-modal: white;
+            --text-modal: #1a1a2e;
+            --bg-input: white;
+            --border-input: #e0e0e0;
+            --bg-code: #f1f2f6;
+            --bg-pre: #1e1e1e;
+            --text-pre: #d4d4d4;
+            --bg-blockquote: #f8f9fa;
+            --text-blockquote: #636e72;
+            --bg-table-even: #f8f9fa;
+            --bg-table-hover: #e8f4f8;
+            --bg-editor: rgba(255, 255, 255, 0.95);
+            --bg-cancel: #e0e0e0;
+            --text-cancel: #333;
+            --bg-info: #f0f0f0;
+            --text-info: #666;
+            --shadow-content: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            --bg-sidebar: rgba(0, 0, 0, 0.95);
+            --text-sidebar: #e0e0e0;
+            --border-sidebar: #333;
+            --bg-content: rgba(30, 30, 46, 0.95);
+            --text-content: #e0e0e0;
+            --text-content-secondary: #b0b0b0;
+            --bg-modal: #1e1e2e;
+            --text-modal: #e0e0e0;
+            --bg-input: #2a2a3e;
+            --border-input: #444;
+            --bg-code: #2a2a3e;
+            --bg-pre: #0d0d1a;
+            --text-pre: #d4d4d4;
+            --bg-blockquote: #2a2a3e;
+            --text-blockquote: #a0a0a0;
+            --bg-table-even: #2a2a3e;
+            --bg-table-hover: #3a3a4e;
+            --bg-editor: rgba(30, 30, 46, 0.95);
+            --bg-cancel: #444;
+            --text-cancel: #e0e0e0;
+            --bg-info: #2a2a3e;
+            --text-info: #a0a0a0;
+            --shadow-content: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+                'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--bg-body);
+            min-height: 100vh;
+            display: flex;
+            transition: background 0.5s ease;
+        }
+        .sidebar {
+            width: 320px;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            color: var(--text-sidebar);
+            overflow-y: auto;
+            max-height: 100vh;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .sidebar-header {
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-sidebar);
+            padding-bottom: 15px;
+        }
+        .sidebar h1 {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .sidebar p { font-size: 0.8rem; color: #888; }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .toolbar button {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .toolbar button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .toolbar button.secondary { background: rgba(255, 255, 255, 0.1); }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            z-index: 1002;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+        .tree-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .tree-node { margin: 2px 0; }
+        .tree-node-content {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            position: relative;
+        }
+        .tree-node-content:hover { background: rgba(102, 126, 234, 0.2); }
+        .tree-node-content.active {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            font-weight: 600;
+        }
+        .tree-toggle {
+            width: 16px; height: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 8px;
+            font-size: 10px;
+            color: #667eea;
+            transition: transform 0.2s ease;
+        }
+        .tree-toggle.expanded { transform: rotate(90deg); }
+        .tree-toggle.hidden { visibility: hidden; }
+        .tree-icon { margin-right: 8px; font-size: 14px; }
+        .tree-children {
+            margin-left: 20px;
+            padding-left: 8px;
+            border-left: 1px solid var(--border-sidebar);
+            display: none;
+        }
+        .tree-children.expanded { display: block; }
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+        .content-container { max-width: 1000px; margin: 0 auto; }
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .content-header h2 { color: white; font-size: 1.5rem; }
+        .content-actions { display: flex; gap: 10px; }
+        .content-actions button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .content-actions button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .content-actions button.primary {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        .content-actions button.danger {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+        .content-actions button.secondary {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .markdown-content {
+            background: var(--bg-content);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: var(--shadow-content);
+            animation: fadeInUp 0.6s ease;
+            transition: background 0.5s ease, box-shadow 0.5s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .markdown-content h1 {
+            font-size: 2.4rem; margin-bottom: 30px; color: var(--text-content);
+            border-bottom: 3px solid #667eea; padding-bottom: 15px;
+            transition: color 0.5s ease;
+        }
+        .markdown-content h2 {
+            font-size: 1.8rem; margin: 40px 0 20px 0; color: var(--text-content);
+            padding-bottom: 8px; border-bottom: 1px solid var(--border-sidebar);
+            transition: color 0.5s ease;
+        }
+        .markdown-content h3 { font-size: 1.4rem; margin: 30px 0 15px 0; color: var(--text-content); transition: color 0.5s ease; }
+        .markdown-content h4 { font-size: 1.2rem; margin: 25px 0 10px 0; color: var(--text-content); transition: color 0.5s ease; }
+        .markdown-content p { line-height: 1.8; margin-bottom: 15px; color: var(--text-content-secondary); transition: color 0.5s ease; }
+        .markdown-content code {
+            background: var(--bg-code); padding: 2px 8px; border-radius: 4px;
+            font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.9em;
+            transition: background 0.5s ease;
+        }
+        .markdown-content pre {
+            background: var(--bg-pre); padding: 20px; border-radius: 8px;
+            overflow-x: auto; margin: 20px 0;
+            transition: background 0.5s ease;
+        }
+        .markdown-content pre code { background: transparent; color: var(--text-pre); }
+        .markdown-content ul, .markdown-content ol { margin-left: 30px; margin-bottom: 15px; }
+        .markdown-content li { margin: 8px 0; line-height: 1.6; color: var(--text-content-secondary); transition: color 0.5s ease; }
+        .markdown-content blockquote {
+            border-left: 4px solid #667eea; padding-left: 20px; margin: 20px 0;
+            color: var(--text-blockquote); font-style: italic;
+            background: var(--bg-blockquote); padding: 15px 20px; border-radius: 0 8px 8px 0;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .markdown-content table {
+            width: 100%; border-collapse: collapse; margin: 25px 0;
+        }
+        .markdown-content th, .markdown-content td {
+            padding: 12px 15px; border: 1px solid var(--border-sidebar); text-align: left;
+            color: var(--text-content-secondary);
+            transition: color 0.5s ease;
+        }
+        .markdown-content th { background: #667eea; color: white; font-weight: 600; }
+        .markdown-content tr:nth-child(even) { background: var(--bg-table-even); transition: background 0.5s ease; }
+        .markdown-content tr:hover { background: var(--bg-table-hover); transition: background 0.5s ease; }
+        .markdown-content a {
+            color: #667eea; text-decoration: none;
+            border-bottom: 1px dashed #667eea; transition: all 0.3s ease; cursor: pointer;
+        }
+        .markdown-content a:hover { color: #764ba2; border-bottom-style: solid; }
+        .editor-container {
+            background: var(--bg-editor);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: var(--shadow-content);
+            transition: background 0.5s ease, box-shadow 0.5s ease;
+        }
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+        .editor-header h2 { color: var(--text-content); font-size: 1.5rem; transition: color 0.5s ease; }
+        .editor-actions { display: flex; gap: 10px; }
+        .editor-actions button {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;
+        }
+        .editor-actions button.save {
+            background: linear-gradient(90deg, #667eea, #764ba2); color: white;
+        }
+        .editor-actions button.cancel {
+            background: var(--bg-cancel); color: var(--text-cancel);
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .editor-actions button.back {
+            background: rgba(102, 126, 234, 0.2); color: #667eea;
+            border: 1px solid #667eea;
+        }
+        .editor-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--bg-info);
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+        .editor-toolbar button {
+            background: var(--bg-input);
+            color: var(--text-content);
+            border: 1px solid var(--border-input);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        .editor-toolbar button:hover {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+        .link-tree-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-input);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: var(--bg-input);
+        }
+        .link-tree-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .link-tree-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+        .link-tree-item.selected {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+        }
+        .link-tree-item.directory {
+            font-weight: 600;
+        }
+        .link-tree-children {
+            margin-left: 20px;
+            padding-left: 8px;
+            border-left: 1px solid var(--border-input);
+        }
+            width: 100%; padding: 12px; border: 2px solid var(--border-input);
+            border-radius: 8px; font-size: 1rem; margin-bottom: 15px;
+            background: var(--bg-input); color: var(--text-content);
+            transition: border-color 0.3s ease, background 0.5s ease, color 0.5s ease;
+        }
+        .editor-input:focus { outline: none; border-color: #667eea; }
+        .editor-textarea {
+            width: 100%; min-height: 500px; padding: 15px;
+            border: 2px solid var(--border-input); border-radius: 8px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.95rem; line-height: 1.6; resize: vertical;
+            background: var(--bg-input); color: var(--text-content);
+            transition: border-color 0.3s ease, background 0.5s ease, color 0.5s ease;
+        }
+        .editor-textarea:focus { outline: none; border-color: #667eea; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000; opacity: 0; visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal {
+            background: var(--bg-modal); border-radius: 16px; padding: 30px;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9); transition: transform 0.3s ease, background 0.5s ease;
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal h3 { margin-bottom: 20px; color: var(--text-modal); font-size: 1.3rem; transition: color 0.5s ease; }
+        .modal-input {
+            width: 100%; padding: 12px; border: 2px solid var(--border-input);
+            border-radius: 8px; font-size: 1rem; margin-bottom: 15px;
+            background: var(--bg-input); color: var(--text-content);
+            transition: border-color 0.3s ease, background 0.5s ease, color 0.5s ease;
+        }
+        .modal-input:focus { outline: none; border-color: #667eea; }
+        .modal-info {
+            background: var(--bg-info); padding: 10px 15px; border-radius: 6px;
+            margin-bottom: 15px; font-size: 0.9rem; color: var(--text-info);
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .modal-actions {
+            display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;
+        }
+        .modal-actions button {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;
+        }
+        .modal-actions button.confirm {
+            background: linear-gradient(90deg, #667eea, #764ba2); color: white;
+        }
+        .modal-actions button.cancel {
+            background: var(--bg-cancel); color: var(--text-cancel);
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .modal-actions button.danger {
+            background: linear-gradient(90deg, #e74c3c, #c0392b); color: white;
+        }
+        .loading {
+            display: flex; justify-content: center; align-items: center;
+            height: 400px; color: white; font-size: 1.2rem;
+        }
+        .error {
+            background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c;
+            color: #e74c3c; padding: 20px; border-radius: 8px; text-align: center;
+        }
+        .success {
+            background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71;
+            color: #27ae60; padding: 15px; border-radius: 8px;
+            margin-bottom: 20px; text-align: center;
+        }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -320px; z-index: 1000; transition: left 0.3s ease; }
+            .sidebar.open { left: 0; }
+            .main-content { padding: 20px; }
+            .markdown-content, .editor-container { padding: 20px; }
+            .mobile-toggle {
+                display: block; position: fixed; top: 20px; right: 20px;
+                z-index: 1001; background: #667eea; color: white;
+                border: none; padding: 12px 20px; border-radius: 8px;
+                cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+            .theme-toggle {
+                position: fixed; top: 20px; right: 90px;
+                z-index: 1002;
+            }
+            .content-header { flex-direction: column; align-items: flex-start; }
+        }
+        @media (min-width: 769px) { .mobile-toggle { display: none; } }
+    </style>
+</head>
+<body>
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰ 菜单</button>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>个人知识库</h1>
+            <p>AI Native Builder</p>
+        </div>
+
+        <div class="toolbar">
+            <button onclick="showCreateModal('file')">📄 新建文件</button>
+            <button onclick="showCreateModal('directory')">📁 新建目录</button>
+            <button class="secondary" onclick="refreshTree()">🔄 刷新</button>
+        </div>
+
+        <div class="tree-container" id="tree-container">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-container">
+            <div id="content-area">
+                <div class="markdown-content" id="content">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建模态框 -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal">
+            <h3 id="createModalTitle">新建文件</h3>
+            <div class="modal-info" id="createLocationInfo">将在当前目录下创建</div>
+            <input type="text" class="modal-input" id="createName" placeholder="名称">
+            <div class="modal-actions">
+                <button class="cancel" onclick="hideModal('createModal')">取消</button>
+                <button class="confirm" onclick="confirmCreate()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认模态框 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3>确认删除</h3>
+            <p id="deleteMessage">确定要删除这个文件吗？</p>
+            <div class="modal-actions">
+                <button class="cancel" onclick="hideModal('deleteModal')">取消</button>
+                <button class="danger" onclick="confirmDelete()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重命名模态框 -->
+    <div class="modal-overlay" id="renameModal">
+        <div class="modal">
+            <h3>重命名</h3>
+            <input type="text" class="modal-input" id="renameName" placeholder="新名称">
+            <div class="modal-actions">
+                <button class="cancel" onclick="hideModal('renameModal')">取消</button>
+                <button class="confirm" onclick="confirmRename()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 链接插入模态框 -->
+    <div class="modal-overlay" id="linkModal">
+        <div class="modal">
+            <h3>插入内部链接</h3>
+            <input type="text" class="modal-input" id="linkText" placeholder="链接显示文本">
+            <div class="link-tree-container" id="linkTreeContainer">
+                <div class="loading">加载目录树...</div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel" onclick="hideModal('linkModal')">取消</button>
+                <button class="confirm" onclick="confirmInsertLink()">插入</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let wikiTree = null;
+        let currentFile = null;
+        let currentDir = '';
+        let expandedNodes = new Set();
+        let deleteTarget = null;
+        let renameTarget = null;
+        let createType = 'file';
+
+        const ICONS = {
+            directory: '📁', file: '📄', 'README': '🏠',
+            '个人知识库': '📚', 'ai-native-builder知识库': '🤖',
+            'clowder-ai架构wiki': '🔧', '总目录': '🗂️',
+            '项目结构': '🏗️', '多智能体协作': '🤝', '智能体': '🧠',
+            '提供商接入': '🔌', 'Claude': '🧬', 'Codex': '⚡',
+            'MCP系统': '🛠️', 'AI主动发言': '💬', 'A2A机制': '🔄'
+        };
+
+        function getIcon(name, type) {
+            if (ICONS[name]) return ICONS[name];
+            return type === 'directory' ? ICONS.directory : ICONS.file;
+        }
+
+        // 递归渲染树
+        function renderTree(nodes, level = 0) {
+            return nodes.map((node, index) => {
+                const icon = getIcon(node.name, node.type);
+                const hasChildren = node.type === 'directory' && node.children && node.children.length > 0;
+                const nodeId = `${node.path}-${index}`;
+                const isExpanded = expandedNodes.has(nodeId);
+
+                let html = `
+                    <div class="tree-node">
+                        <div class="tree-node-content"
+                             data-path="${node.path}"
+                             data-type="${node.type}"
+                             data-id="${nodeId}"
+                             onclick="handleNodeClick(event, '${escapeJs(node.path)}', '${node.type}', '${nodeId}')"
+                             oncontextmenu="handleContextMenu(event, '${escapeJs(node.path)}', '${node.type}')">
+                            <span class="tree-toggle ${hasChildren ? '' : 'hidden'} ${isExpanded ? 'expanded' : ''}">
+                                ${hasChildren ? '▶' : ''}
+                            </span>
+                            <span class="tree-icon">${icon}</span>
+                            <span class="tree-name">${node.name}</span>
+                        </div>
+                `;
+
+                if (hasChildren) {
+                    html += `<div class="tree-children ${isExpanded ? 'expanded' : ''}">`;
+                    html += renderTree(node.children, level + 1);
+                    html += `</div>`;
+                }
+
+                html += `</div>`;
+                return html;
+            }).join('');
+        }
+
+        function escapeJs(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        // 处理节点点击
+        function handleNodeClick(event, path, type, nodeId) {
+            event.stopPropagation();
+
+            const toggle = event.currentTarget.querySelector('.tree-toggle');
+
+            if (type === 'directory') {
+                if (expandedNodes.has(nodeId)) {
+                    expandedNodes.delete(nodeId);
+                    toggle.classList.remove('expanded');
+                    const children = event.currentTarget.nextElementSibling;
+                    if (children) children.classList.remove('expanded');
+                } else {
+                    expandedNodes.add(nodeId);
+                    toggle.classList.add('expanded');
+                    const children = event.currentTarget.nextElementSibling;
+                    if (children) children.classList.add('expanded');
+                }
+                // 更新当前目录
+                currentDir = path;
+            } else {
+                loadFile(path);
+            }
+        }
+
+        // 右键菜单
+        function handleContextMenu(event, path, type) {
+            event.preventDefault();
+            const choice = prompt('选择操作:\n1 - 重命名\n2 - 删除\n其他 - 取消');
+            if (choice === '1') {
+                showRenameModal(path);
+            } else if (choice === '2') {
+                showDeleteModal(path, type);
+            }
+        }
+
+        // 加载文件
+        async function loadFile(filePath) {
+            if (currentFile === filePath) return;
+
+            // 更新当前目录为文件所在目录
+            const lastSlash = filePath.lastIndexOf('/');
+            currentDir = lastSlash > 0 ? filePath.substring(0, lastSlash) : '';
+
+            document.querySelectorAll('.tree-node-content').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.path === filePath) {
+                    item.classList.add('active');
+                }
+            });
+
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div class="content-header">
+                    <h2>${filePath.split('/').pop()}</h2>
+                    <div class="content-actions">
+                        <button class="primary" onclick="editFile('${escapeJs(filePath)}')">✏️ 编辑</button>
+                        <button class="danger" onclick="showDeleteModal('${escapeJs(filePath)}', 'file')">🗑️ 删除</button>
+                    </div>
+                </div>
+                <div class="markdown-content" id="content">
+                    <div class="loading">加载中...</div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/api/wiki/read?file=${encodeURIComponent(filePath)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const markdown = await response.text();
+                currentFile = filePath;
+
+                const renderer = new marked.Renderer();
+                renderer.link = function(token) {
+                    const href = token.href;
+                    const title = token.title;
+                    const text = token.text;
+                    // 处理内部链接格式: ?file=path/to/file.md
+                    if (href && typeof href === 'string' && href.startsWith('?file=')) {
+                        // 提取路径 - 服务器返回的已经是未编码的中文路径
+                        const linkPath = href.substring(6);
+                        // 对路径中的反斜杠和引号进行转义，避免破坏 HTML 属性
+                        const safePath = linkPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        return `<a href="javascript:void(0)" onclick="loadFile('${safePath}')" title="${title || ''}">${text}</a>`;
+                    }
+                    return `<a href="${href}" target="_blank" title="${title || ''}">${text}</a>`;
+                };
+
+                marked.setOptions({
+                    highlight: function(code, lang) {
+                        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                        return hljs.highlight(code, { language }).value;
+                    },
+                    breaks: true,
+                    gfm: true,
+                    renderer: renderer
+                });
+
+                const html = marked.parse(markdown);
+                document.getElementById('content').innerHTML = html;
+
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('open');
+                }
+
+            } catch (error) {
+                console.error('Error loading file:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <h3>加载失败</h3>
+                        <p>无法加载文件: ${filePath}</p>
+                        <p>错误: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 编辑文件
+        async function editFile(filePath) {
+            try {
+                const response = await fetch(`/api/wiki/read?file=${encodeURIComponent(filePath)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const content = await response.text();
+                const contentArea = document.getElementById('content-area');
+
+                contentArea.innerHTML = `
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <h2>编辑: ${filePath.split('/').pop()}</h2>
+                            <div class="editor-actions">
+                                <button class="save" onclick="saveFile('${escapeJs(filePath)}')">💾 保存</button>
+                                <button class="cancel" onclick="loadFile('${escapeJs(filePath)}')">❌ 取消</button>
+                                <button class="back" onclick="previewFile('${escapeJs(filePath)}')">👁️ 返回浏览</button>
+                            </div>
+                        </div>
+                        <input type="text" class="editor-input" value="${escapeJs(filePath)}" readonly style="width: 100%; font-size: 0.9rem; padding: 10px 15px;">
+                        <div class="editor-toolbar">
+                            <button onclick="showLinkModal()" title="插入内部链接">🔗 插入链接</button>
+                            <button onclick="insertText('**粗体**')" title="粗体"><strong>B</strong></button>
+                            <button onclick="insertText('*斜体*')" title="斜体"><em>I</em></button>
+                            <button onclick="insertText('# 标题')" title="标题">H1</button>
+                            <button onclick="insertText('## 标题')" title="二级标题">H2</button>
+                            <button onclick="insertCodeBlock()" title="代码块"><code>{ }</code></button>
+                            <button onclick="insertText('- [ ] 待办事项')" title="待办">☐</button>
+                        </div>
+                        <textarea class="editor-textarea" id="editContent" placeholder="输入 Markdown 内容...">${escapeHtml(content)}</textarea>
+                    </div>
+                `;
+
+            } catch (error) {
+                alert('加载文件失败: ' + error.message);
+            }
+        }
+
+        // 保存文件
+        async function saveFile(filePath) {
+            const content = document.getElementById('editContent').value;
+
+            try {
+                const response = await fetch('/api/wiki/update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: filePath, content: content })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('保存成功！');
+                    loadFile(filePath);
+                } else {
+                    alert('保存失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        }
+
+        // 预览文件（从编辑模式返回浏览）
+        function previewFile(filePath) {
+            currentFile = null; // 重置当前文件，强制重新加载
+            loadFile(filePath);
+        }
+
+        // 在编辑器中插入文本
+        function insertText(text) {
+            const textarea = document.getElementById('editContent');
+            if (!textarea) return;
+
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const before = textarea.value.substring(0, start);
+            const after = textarea.value.substring(end);
+
+            textarea.value = before + text + after;
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        }
+
+        // 显示链接插入模态框
+        async function showLinkModal() {
+            document.getElementById('linkText').value = '';
+            document.getElementById('linkModal').classList.add('active');
+            selectedLinkPath = null;
+
+            // 加载目录树到模态框
+            const container = document.getElementById('linkTreeContainer');
+            try {
+                const response = await fetch('/api/wiki/tree');
+                const data = await response.json();
+                container.innerHTML = renderLinkTree(data.tree);
+            } catch (error) {
+                container.innerHTML = '<div class="error">加载失败</div>';
+            }
+        }
+
+        let selectedLinkPath = null;
+
+        // 渲染链接选择树（只显示文件）
+        function renderLinkTree(nodes, level = 0) {
+            return nodes.map(node => {
+                const isFile = node.type === 'file';
+                const indent = '  '.repeat(level);
+
+                let html = '';
+                if (isFile) {
+                    html += `
+                        <div class="link-tree-item ${selectedLinkPath === node.path ? 'selected' : ''}"
+                             onclick="selectLinkPath('${escapeJs(node.path)}', this)"
+                             style="padding-left: ${12 + level * 20}px">
+                            <span>📄</span> ${node.name}
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="link-tree-item directory" style="padding-left: ${12 + level * 20}px">
+                            <span>📁</span> ${node.name}
+                        </div>
+                    `;
+                    if (node.children) {
+                        html += `<div class="link-tree-children">`;
+                        html += renderLinkTree(node.children, level + 1);
+                        html += `</div>`;
+                    }
+                }
+                return html;
+            }).join('');
+        }
+
+        // 选择链接路径
+        function selectLinkPath(path, element) {
+            selectedLinkPath = path;
+            document.querySelectorAll('.link-tree-item').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        // 确认插入链接
+        function confirmInsertLink() {
+            if (!selectedLinkPath) {
+                alert('请先选择一个目标文件');
+                return;
+            }
+
+            const text = document.getElementById('linkText').value.trim();
+            const linkText = text || selectedLinkPath.split('/').pop().replace('.md', '');
+
+            // 计算相对路径（从当前文件到目标文件）
+            const currentPath = currentFile || '';
+            const currentDir = currentPath.lastIndexOf('/') > 0
+                ? currentPath.substring(0, currentPath.lastIndexOf('/'))
+                : '';
+
+            const relativePath = calculateRelativePath(currentDir, selectedLinkPath);
+            const markdownLink = `[${linkText}](./${relativePath})`;
+
+            insertText(markdownLink);
+            hideModal('linkModal');
+        }
+
+        // 计算相对路径
+        function calculateRelativePath(fromDir, toPath) {
+            if (!fromDir) return toPath;
+
+            const fromParts = fromDir.split('/');
+            const toParts = toPath.split('/');
+
+            let commonLength = 0;
+            while (commonLength < fromParts.length &&
+                   commonLength < toParts.length &&
+                   fromParts[commonLength] === toParts[commonLength]) {
+                commonLength++;
+            }
+
+            const upCount = fromParts.length - commonLength;
+            const downParts = toParts.slice(commonLength);
+
+            let result = '';
+            for (let i = 0; i < upCount; i++) {
+                result += '../';
+            }
+            result += downParts.join('/');
+
+            return result;
+        }
+
+        // 插入代码块
+        function insertCodeBlock() {
+            const code = '```\n代码块\n```';
+            insertText(code);
+        }
+
+        // 显示创建模态框 - 自动使用当前目录
+        function showCreateModal(type) {
+            createType = type;
+            document.getElementById('createModalTitle').textContent = type === 'directory' ? '新建目录' : '新建文件';
+            document.getElementById('createName').value = '';
+            document.getElementById('createName').placeholder = type === 'directory' ? '目录名称' : '文件名称 (如: 新文档.md)';
+
+            // 显示将在哪个目录下创建
+            const locationText = currentDir ? `将在 "${currentDir}" 目录下创建` : '将在根目录下创建';
+            document.getElementById('createLocationInfo').textContent = locationText;
+
+            document.getElementById('createModal').classList.add('active');
+            document.getElementById('createName').focus();
+        }
+
+        // 确认创建
+        async function confirmCreate() {
+            const name = document.getElementById('createName').value.trim();
+
+            if (!name) {
+                alert('请输入名称');
+                return;
+            }
+
+            // 自动添加 .md 扩展名
+            let finalName = name;
+            if (createType === 'file' && !finalName.endsWith('.md')) {
+                finalName += '.md';
+            }
+
+            try {
+                const response = await fetch('/api/wiki/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: createType,
+                        path: finalName,
+                        parentDir: currentDir,
+                        content: createType === 'file' ? `# ${finalName.replace('.md', '')}\n\n新建文档内容...` : ''
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('创建成功！');
+                    hideModal('createModal');
+                    await refreshTree();
+                    if (createType === 'file') {
+                        loadFile(result.path);
+                    }
+                } else {
+                    alert('创建失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('创建失败: ' + error.message);
+            }
+        }
+
+        // 显示删除模态框
+        function showDeleteModal(path, type) {
+            deleteTarget = { path, type };
+            document.getElementById('deleteMessage').textContent = `确定要删除 ${type === 'directory' ? '目录' : '文件'} "${path.split('/').pop()}" 吗？`;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        // 确认删除
+        async function confirmDelete() {
+            if (!deleteTarget) return;
+
+            try {
+                const response = await fetch('/api/wiki/delete', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: deleteTarget.path })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('删除成功！');
+                    hideModal('deleteModal');
+                    await refreshTree();
+                    if (currentFile === deleteTarget.path) {
+                        document.getElementById('content-area').innerHTML = `
+                            <div class="markdown-content">
+                                <h2>欢迎</h2>
+                                <p>请从左侧目录树选择一个文档查看。</p>
+                            </div>
+                        `;
+                        currentFile = null;
+                    }
+                } else {
+                    alert('删除失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+
+            deleteTarget = null;
+        }
+
+        // 显示重命名模态框
+        function showRenameModal(path) {
+            renameTarget = path;
+            document.getElementById('renameName').value = path.split('/').pop();
+            document.getElementById('renameModal').classList.add('active');
+        }
+
+        // 确认重命名
+        async function confirmRename() {
+            if (!renameTarget) return;
+
+            const newName = document.getElementById('renameName').value.trim();
+            if (!newName) {
+                alert('请输入新名称');
+                return;
+            }
+
+            const oldPath = renameTarget;
+            const parentDir = oldPath.lastIndexOf('/') > 0 ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+            const newPath = parentDir ? `${parentDir}/${newName}` : newName;
+
+            try {
+                const response = await fetch('/api/wiki/rename', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldPath: oldPath, newPath: newPath })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('重命名成功！');
+                    hideModal('renameModal');
+                    await refreshTree();
+                    if (currentFile === oldPath) {
+                        loadFile(newPath);
+                    }
+                } else {
+                    alert('重命名失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('重命名失败: ' + error.message);
+            }
+
+            renameTarget = null;
+        }
+
+        // 隐藏模态框
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // 刷新目录树
+        async function refreshTree() {
+            await loadTree();
+        }
+
+        // 加载目录树
+        async function loadTree() {
+            const treeContainer = document.getElementById('tree-container');
+
+            try {
+                const response = await fetch('/api/wiki/tree');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                wikiTree = data.tree;
+
+                treeContainer.innerHTML = renderTree(wikiTree);
+
+            } catch (error) {
+                console.error('Error loading tree:', error);
+                treeContainer.innerHTML = `
+                    <div class="error">
+                        <h3>加载目录树失败</h3>
+                        <p>错误: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // HTML 转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 移动端侧边栏切换
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // 主题切换
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('wiki-theme', newTheme);
+            updateThemeButton(newTheme);
+            updateCodeHighlightTheme(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeToggle');
+            btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function updateCodeHighlightTheme(theme) {
+            const link = document.getElementById('hljs-theme');
+            if (theme === 'dark') {
+                link.href = 'https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css';
+            } else {
+                link.href = 'https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css';
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('wiki-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+            updateCodeHighlightTheme(savedTheme);
+        }
+
+        // 初始化主题
+        initTheme();
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadTree();
+
+            if (wikiTree && wikiTree.length > 0) {
+                wikiTree.forEach((node, index) => {
+                    if (node.type === 'directory') {
+                        const nodeId = `${node.path}-${index}`;
+                        expandedNodes.add(nodeId);
+                    }
+                });
+
+                const treeContainer = document.getElementById('tree-container');
+                treeContainer.innerHTML = renderTree(wikiTree);
+
+                const firstDir = wikiTree.find(node => node.type === 'directory');
+                if (firstDir && firstDir.children) {
+                    const readmeNode = firstDir.children.find(node =>
+                        node.name.toLowerCase() === 'readme' ||
+                        node.name.toLowerCase() === '总目录'
+                    );
+                    if (readmeNode) {
+                        loadFile(readmeNode.path);
+                    }
+                }
+            }
+        });
+
+        // 点击模态框外部关闭
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+            }
+        });
+    </script>
+</body>
+</html>
