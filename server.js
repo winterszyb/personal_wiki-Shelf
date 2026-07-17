@@ -367,7 +367,7 @@ const server = http.createServer(async (req, res) => {
 
     // 静态文件服务
     if (pathname === '/' || pathname === '/index.html') {
-        const indexPath = path.join(WIKI_DIR, 'index.html');
+        const indexPath = path.join(__dirname, 'index.html');
 
         if (fs.existsSync(indexPath)) {
             fs.readFile(indexPath, 'utf8', (err, data) => {
