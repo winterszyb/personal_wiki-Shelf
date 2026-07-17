@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 
-const WIKI_DIR = path.join(__dirname, '个人知识库');
+const WIKI_DIR = path.resolve(__dirname);
 const PORT = 3000;
 
 // MIME 类型映射
@@ -57,6 +57,64 @@ function scanDirectory(dir, baseDir = WIKI_DIR) {
     });
 
     return items;
+}
+
+function scanDirectory(dir, baseDir = WIKI_DIR) {
+    const items = [];
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
+        const stat = fs.statSync(fullPath);
+        const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+
+        if (stat.isDirectory()) {
+            const children = scanDirectory(fullPath, baseDir);
+            if (children.length > 0) {
+                items.push({
+                    name: file,
+                    type: 'directory',
+                    path: relativePath,
+                    children: children
+                });
+            }
+        } else if (file.endsWith('.md')) {
+            items.push({
+                name: file.replace('.md', ''),
+                type: 'file',
+                path: relativePath,
+                fullPath: fullPath.replace(/\\/g, '/')
+            });
+        }
+    }
+
+    items.sort((a, b) => {
+        if (a.type === b.type) {
+            return a.name.localeCompare(b.name);
+        }
+        return a.type === 'directory' ? -1 : 1;
+    });
+
+    return items;
+}
+
+// Wrapper: 返回从 WIKI_DIR 根开始的树（路径不以 WIKI_DIR basename 开头）
+function scanWikiTree() {
+    const tree = scanDirectory(WIKI_DIR);
+    // 去掉 WIKI_DIR basename 前缀，让路径变成如 "Wiki系统介绍/总目录.md"
+    const wikiDirName = path.basename(WIKI_DIR);
+    return tree.map(node => stripBasePath(node, wikiDirName));
+}
+
+function stripBasePath(node, baseName) {
+    const newPath = node.path.startsWith(baseName + '/')
+        ? node.path.substring(baseName.length + 1)
+        : (node.path === baseName ? '' : node.path);
+    return {
+        ...node,
+        path: newPath || '.',
+        children: node.children ? node.children.map(c => stripBasePath(c, baseName)) : undefined
+    };
 }
 
 // 解析 Markdown 链接，转换为相对路径
@@ -132,8 +190,11 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/wiki/tree' && method === 'GET') {
         try {
             const tree = scanDirectory(WIKI_DIR);
+            // 只返回"个人知识库"子树的内容
+            const wikiRoot = tree.find(n => n.type === 'directory' && n.name === '个人知识库');
+            const wikiTree = wikiRoot ? wikiRoot.children || [] : [];
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end(JSON.stringify({ tree }));
+            res.end(JSON.stringify({ tree: wikiTree }));
         } catch (error) {
             console.error('Error scanning directory:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
